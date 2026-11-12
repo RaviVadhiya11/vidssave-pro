@@ -1,0 +1,11 @@
+name = "vidssave-pro-instagram"
+main = "worker/instagram.js"
+compatibility_date = "2026-11-12"
+
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "REPLACE_WITH_YOUR_CLOUDFLARE_KV_NAMESPACE_ID"
+
+[vars]
+IG_REDIRECT_URI = "https://REPLACE-WORKER-SUBDOMAIN.workers.dev/auth/callback"
+FRONTEND_ORIGIN = "https://ravivadhiya11.github.io"
