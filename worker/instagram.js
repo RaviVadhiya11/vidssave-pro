@@ -9,7 +9,7 @@ const COOKIE = "vsp_session";
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {
   status, headers: { "content-type":"application/json; charset=utf-8", "cache-control":"no-store", ...headers }
 });
-const cookie = (value, maxAge=86400) => `${COOKIE}=${value}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+const cookie = (value, maxAge=86400) => `${COOKIE}=${value}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAge}`;
 const random = (n=32) => {
   const bytes = crypto.getRandomValues(new Uint8Array(n));
   return Array.from(bytes, b=>b.toString(16).padStart(2,"0")).join("");
