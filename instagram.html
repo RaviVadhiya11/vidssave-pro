@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d1b"><title>Connect Instagram — VidsSave Pro</title>
+<style>
+:root{--bg:#080d1b;--panel:#121d32;--line:#344663;--ink:#f4f7ff;--muted:#a6b2c9;--cyan:#67e8f9;--violet:#a78bfa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(700px 400px at 50% -120px,#26345d,transparent 70%),var(--bg);color:var(--ink);font:15px/1.55 system-ui,Arial}.wrap{width:min(850px,calc(100% - 32px));margin:auto}header{padding:20px 0;border-bottom:1px solid #ffffff18}.brand{font-size:22px;font-weight:900}.brand span{color:var(--cyan)}a{color:var(--cyan)}main{padding:44px 0}.panel{background:linear-gradient(145deg,#172440,#10192b);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 22px 65px #0006}h1{font-size:clamp(28px,6vw,42px);line-height:1.1;margin:0 0 12px;letter-spacing:-1px}.muted{color:var(--muted)}label{display:block;font-weight:700;margin:20px 0 7px}input{width:100%;padding:14px;border:1px solid #415574;background:#080f20;color:white;border-radius:11px;font:inherit}button{border:0;border-radius:11px;padding:14px 18px;font:inherit;font-weight:800;cursor:pointer}.connect{margin-top:14px;width:100%;background:linear-gradient(100deg,var(--violet),var(--cyan));color:#08111f}.secondary{background:#1d2a43;border:1px solid #465a7a;color:white}.msg{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;color:#cbd6ea;white-space:pre-wrap}.profile{display:none;margin-top:22px;padding:15px;border:1px solid #286b58;background:#102b29;border-radius:13px}.items{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}.item{border:1px solid var(--line);background:#0b1425;border-radius:12px;padding:12px;min-width:0}.item img{width:100%;aspect-ratio:1.2;object-fit:cover;border-radius:8px;background:#202b40}.item p{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.item a{display:inline-block;margin:4px 10px 0 0;font-size:13px}.warn{margin-top:20px;padding:14px;border:1px solid #69532a;background:#2a2417;border-radius:12px;color:#f3dfa8;font-size:13px}.small{font-size:12px}@media(max-width:560px){main{padding:25px 0}.panel{padding:18px}.items{grid-template-columns:1fr}}
+</style></head><body>
+<header><div class="wrap"><a class="brand" href="./">VidsSave<span> Pro</span></a></div></header>
+<main class="wrap"><section class="panel">
+<h1>Connect your Instagram account</h1>
+<p class="muted">Official Instagram Login for your own Business or Creator account. After consent, this page can show media returned by Meta for that connected account.</p>
+<label for="worker">Your Cloudflare Worker URL</label><input id="worker" type="url" placeholder="https://your-worker.your-subdomain.workers.dev">
+<button id="connect" class="connect">Connect Instagram securely</button>
+<div id="message" class="msg" role="status">Backend setup is required before connecting. See the setup guide in the GitHub repository.</div>
+<div id="profile" class="profile"></div>
+<div id="items" class="items"></div>
+<div class="warn"><b>Important:</b> This integration lists media from the account that authorizes the app. It is not a downloader for arbitrary public Reels. Only save content you own or have permission to download. Meta may omit media URLs or make them temporary.</div>
+<p class="small muted"><a href="https://github.com/RaviVadhiya11/vidssave-pro/blob/main/docs/INSTAGRAM_SETUP.md">Open setup guide</a> · <a href="./">Back to VidsSave Pro</a></p>
+</section></main>
+<script>
+const $=id=>document.getElementById(id),input=$("worker"),msg=$("message");
+input.value=localStorage.getItem("vsp_worker_url")||"";
+function base(){let v=input.value.trim().replace(/\/$/,"");try{let u=new URL(v);if(u.protocol!=="https:")throw 0;return u.origin}catch{return null}}
+function say(s){msg.textContent=s}
+$("connect").addEventListener("click",()=>{const b=base();if(!b){say("Enter your deployed HTTPS Cloudflare Worker URL first.");input.focus();return}localStorage.setItem("vsp_worker_url",b);location.href=b+"/auth/start"});
+async function load(){
+ const b=base();if(!b)return;
+ const q=new URLSearchParams(location.search);
+ if(q.has("instagram"))say("Instagram login completed. Loading your account…");
+ try{
+  const p=await fetch(b+"/api/instagram/me",{credentials:"include"});
+  if(!p.ok){const e=await p.json().catch(()=>({}));say(e.error||"Connect your Instagram account to continue.");return}
+  const me=await p.json();$("profile").style.display="block";$("profile").textContent="@"+me.username+" · "+(me.account_type||"Professional account")+" · "+(me.media_count??"")+" media";
+  const r=await fetch(b+"/api/instagram/media",{credentials:"include"});const data=await r.json();if(!r.ok)throw new Error(data.error||"Could not load media");
+  $("items").replaceChildren();
+  for(const item of data.data||[]){const card=document.createElement("article");card.className="item";const img=document.createElement("img");img.alt="Instagram media preview";img.loading="lazy";img.src=item.thumbnail_url||item.media_url||"";card.append(img);const p=document.createElement("p");p.textContent=(item.media_type||"MEDIA")+" · "+(item.caption||"No caption").slice(0,160);card.append(p);if(item.media_url){const a=document.createElement("a");a.href=item.media_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Open authorised media";card.append(a)}if(item.permalink){const a=document.createElement("a");a.href=item.permalink;a.target="_blank";a.rel="noopener noreferrer";a.textContent="View on Instagram";card.append(a)}$("items").append(card)}
+  if(!(data.data||[]).length)say("Connected, but Meta returned no media for this account.");
+  else say("Connected successfully. Showing media returned by Instagram for your account.");
+ }catch(e){say(e.message+" If the browser blocks cross-site cookies, configure the Worker on a custom subdomain under your website's domain and try again.")}
+}
+input.addEventListener("change",()=>{const b=base();if(b)localStorage.setItem("vsp_worker_url",b)});
+load();
+</script></body></html>
